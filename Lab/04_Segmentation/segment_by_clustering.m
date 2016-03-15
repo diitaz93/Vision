@@ -21,19 +21,16 @@ function my_segmentation = segment_by_clustering(I,FS,CM,NC)
 % CM (Optional): Clustering method to be used.
 %     'kmeans' (by default): Uses matlab function kmeans to 
 %                            segment the image
-%     'gmm':
+%     'gmm': Uses mixture of gaussian distributions to fit the
+%            the clusters of pixels
 %     'watersheds':
-%     'hierarchical':
 % NC (Optional): Number of clusters.
 %     Number of clusters to be used in the segmentation
-%     (5 by default)
+%     (5 by default). If 'watersheds' method is chosen, this
+%     parameter will be used as the h-minimum value used in the
+%     watershed segmentation.
 
 %----------------------------------------------------------------%
-% % Full nargin mode
-% if nargin ~= 4
-%     error('Not enough input arguments')
-% end
-
 % By default mode
 switch nargin
     case 3
@@ -48,14 +45,12 @@ switch nargin
     case 0
         error('Not enough input arguments')
 end
-
-% Outputs:
-% my_segmentation
-
-%temp = 0;
+%------------------------------------------------------------------%
+% Size of the image
 s=size(I);
+% Matrices with x and y positions of pixels
 [x,y]=meshgrid(1:s(2),1:s(1));
-
+% Set the space to be used in the segmentation
 switch FS
     case 'lab'
         I = rgb2lab(I);
@@ -69,39 +64,17 @@ switch FS
     case 'hsv+xy'
         I = rgb2hsv(I);
         I=cat(3,I,x,y);
+    case 'rgb'
+        ;
+    otherwise
+        error('Input argument not recognized')
 end
-
-% if(strcmp(FS,'lab'))
-%     I = rgb2lab(I);
-% elseif(strcmp(FS,'hsv'))
-%     I = rgb2hsv(I);
-% elseif(strcmp(FS,'rgb+xy'))
-%     temp = 1;
-% elseif(strcmp(FS,'lab+xy'))
-%     I = rgb2lab(I);
-%     temp = 1;
-% elseif(strcmp(FS,'hsv+xy'))
-%     I = rgb2hsv(I);
-%     temp = 1;
-% end
-
-% if(temp == 0)
-%     DI = [reshape(I(:,:,1),[1 numel(I)]),reshape(I(:,:,2),[1 numel(I)]),...
-%         reshape(I(:,:,3),[1 numel(I)])];
-% else
-%     x = repmat((1:size(I,1))',[size(I,2),1]);
-%     for i=1:numel(I)
-%         y(i,1) = temp;
-%         if(mod(temp,size(I,1))==0)
-%             temp = temp+1;
-%         end
-%     end
-%     
-%     DI = [reshape(I(:,:,1),[1 numel(I)]),reshape(I(:,:,2),[1 numel(I)]),...
-%         reshape(I(:,:,3),[1 numel(I)]),x,y];
-% end
+%------------------------------------------------------------------%
+% New size of the image (due to adition of x and y coordinates)
 s=size(I);
+% List of pixels as data
 Ir=reshape(double(I),numel(I)/s(3),s(3));
+
 switch CM
     case 'kmeans'
         id=kmeans(double(Ir),NC);
@@ -110,19 +83,20 @@ switch CM
         gmodel=fitgmdist(Ir,5);
         id=cluster(gmodel,Ir);
         Ir2=reshape(id,s(1),s(2));
-
-    case 'hierarchical'
-        printf('Soon...');
-
     case 'watershed'
-        printf('Soon...');
-        
+       I=rgb2gray(I(:,:,1:3));
+       se=strel('disk',3);
+       Id=imdilate(I,se);
+       Ie=imerode(I,se);
+       grad=Id-Ie;
+       min=imextendedmin(grad,NC);
+       min=imimposemin(grad,min);
+       Ir2=watershed(min);
     otherwise
         error('Input argument not recognized')
-       
-
 end
-    
+%------------------------------------------------------------------%
+% Asign answer
 my_segmentation=Ir2;
 end
 
