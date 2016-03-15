@@ -1,0 +1,16 @@
+im=imread('homer.jpg');
+im=rgb2gray(im);
+imshow(im);
+% fy=fspecial('sobel');
+% fx=fspecial('prewitt');
+% Ix=imfilter(im,fx);
+% Iy=imfilter(im,fy);
+% grad=sqrt(double(Ix).^2+double(Iy).^2);
+se=strel('disk',3);
+dil=imdilate(im,se);
+ero=imerode(im,se);
+grad=dil-ero;
+min= imextendedmin(grad, 80);
+min= imimposemin(grad, min);
+Ir=watershed(min);
+figure;imagesc(Ir);

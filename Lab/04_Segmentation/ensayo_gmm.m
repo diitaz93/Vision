@@ -1,0 +1,11 @@
+im=imread('homer.jpg');
+figure;imshow(im);
+s=size(im);
+imR=reshape(im,numel(im)/3,3);
+imR=double(imR);
+gmodel=fitgmdist(imR,5);
+id=cluster(gmodel,imR);
+newim=reshape(id,s(1),s(2));
+figure;
+imagesc(newim)
+colormap('lines');

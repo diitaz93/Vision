@@ -1,0 +1,10 @@
+im=imread('homer.jpg');
+figure;imshow(im);
+s=size(im);
+imR=reshape(im,numel(im)/3,3);
+imR=double(imR);
+id=kmeans(imR,8);
+newim=reshape(id,s(1),s(2));
+figure;
+imagesc(newim)
+colormap('lines');
